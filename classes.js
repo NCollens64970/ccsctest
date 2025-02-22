@@ -1,12 +1,17 @@
 
 let map;
 let userMarker;
+let building = "default";
+let bounds;
 function start() {
     //Clear possible previous session storage and create event listeners
     sessionStorage.clear();
     createEventListeners();
-    placeUserOnMap();
-    setInterval(placeUserOnMap, 10000)
+    //placeUserOnMap();
+    //setInterval(placeUserOnMap, 10000)
+    setDefaultBounds();
+    setInterval(updateMap,5000);
+
 }
 
 function createEventListeners() {
@@ -19,7 +24,7 @@ async function buttonHandler() {
     //Get the building and check for an entry
     building = document.getElementById('building').value;
     console.log("Building: " + building);
-    if(building == "default") {
+    if(building == "campus") {
         window.alert("Please Select a Building.");
         return;
     }
@@ -157,6 +162,41 @@ function placeUserOnMap() {
         )
     }
 }
+
+function setDefaultBounds() {
+//     SW: 38.75584609299071, -93.74314581659915
+//     NE: 38.760581485120454, -93.73409265378699
+
+    const sw = new google.maps.LatLng(38.75584609299071, -93.74314581659915);
+    const ne = new google.maps.LatLng(38.760581485120454, -93.73409265378699);
+
+    bounds = new google.maps.LatLngBounds(sw,ne);
+    map.fitBounds(bounds);
+
+}
+
+function updateBounds(){
+    lat = 39.08813678102937
+    lon = -92.18579472908672
+
+    temp = new google.maps.LatLng(lat,lon);
+    bounds = bounds.extend(temp);
+    map.fitBounds(bounds);
+}
+
+function frameOnUserAndBuilding(){
+    //     Used to update bounds when user and building coords are populated
+    //     This ensure that the map is always showing the users position and their destination
+}
+
+function updateMap(){
+
+    frameOnUserAndBuilding();
+    updateBounds();
+
+}
+
+
 
 
 
