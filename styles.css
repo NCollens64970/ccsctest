@@ -1,0 +1,93 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  height: 100vh;
+  background-color: #f4f4f4;
+}
+
+/* Form Container */
+.form-container {
+  width: 25%;
+  height: 75vh;
+  background: white;
+  padding: 20px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  margin-right: 20px;
+
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  right: 0;
+}
+
+.class-textbox {
+  width: 100%;
+  padding: 10px;
+  margin: calc(7vh / 6) 0;
+  box-sizing: border-box;
+}
+/* Form Styling */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Labels */
+label {
+  font-weight: bold;
+  margin-top: 22px;
+}
+
+/* Inputs & Select */
+input,
+select {
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+input:invalid {
+  border: solid 3px red;
+}
+
+/* Submit Button */
+button {
+  margin-top: 40px;
+  padding: 10px;
+  background-color: #d31145;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #a30e34;
+}
+
+gmp-map {
+  height: 80%;
+  width: 65%;
+  margin-left:2vw;
+  box-shadow: black 2px 2px 9px;
+  padding-left: 2vw;
+
+}
+
+#map{
+  height: 80%;
+  width: 65%;
+  margin-left:2vw;
+  box-shadow: black 2px 2px 9px;
+  padding-left: 2vw;
+}

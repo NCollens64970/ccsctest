@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Enter Classrooms</title>
+  </head>
+  <link rel="stylesheet" href="styles.css" type="text/css" />
+  <link rel="icon" href="ucm-mule.png" type="image/x-icon" />
+  <script type="text/javascript" src="classes.js"></script>
+
+  <body>
+    <div class="form-container">
+      <h2>Enter Your Class Schedule</h2>
+      <form>
+        <!-- Dropdown for building selection -->
+        <label>Select Building:</label>
+        <select id="building">
+          <option value="default">Please Select a Building</option>
+          <option value="dockery">Dockery (D)</option>
+          <option value="grinstead">Grinstead (G)</option>
+          <option value="humphreys">Humphreys (HUM)</option>
+          <option value="lovinger">Lovinger (LOV)</option>
+          <option value="martin">Martin (MAR)</option>
+          <option value="morrow">Morrow (M)</option>
+          <option value="ward-edwards">Ward Edwards (WDE)</option>
+          <option value="utt">Utt (UTT)</option>
+          <option value="wc-morris">W.C. Morris (WCM)</option>
+        </select>
+
+        <!-- Classroom inputs -->
+        <label>Classroom 1:</label>
+        <input
+          type="text"
+          class="field"
+          pattern="\d{1,5}"
+          placeholder="Enter Classroom Number"
+        />
+
+        <label>Classroom 2:</label>
+        <input
+          type="text"
+          class="field"
+          pattern="\d{1,5}"
+          placeholder="Enter Classroom Number"
+        />
+
+        <label>Classroom 3:</label>
+        <input
+          type="text"
+          class="field"
+          pattern="\d{1,5}"
+          placeholder="Enter Classroom Number"
+        />
+
+        <label>Classroom 4:</label>
+        <input
+          type="text"
+          class="field"
+          pattern="\d{1,5}"
+          placeholder="Enter Classroom Number"
+        />
+
+        <label>Classroom 5:</label>
+        <input
+          type="text"
+          class="field"
+          pattern="\d{1,5}"
+          placeholder="Enter Classroom Number"
+        />
+
+        <button id="button" type="button">Submit</button>
+      </form>
+    </div>
+    <!-- End of form container  -->
+    <div id="map">
+
+    </div>
+  </body>
+  <script>
+    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+      key: "AIzaSyAdQOn7kufnZ3HBC6ageqJT7-FJFtaqpL0",
+      v: "weekly",
+      // This is from google and I have very little idea how parts of it work - Nick
+      // Use the 'v' parameter to indicate the version to use (weekly, beta, alpha, etc.).
+      // Add other bootstrap parameters as needed, using camel case.
+    });
+  </script>
+
+
+  <!-- Google Maps API should be loaded AFTER initMap is defined -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdQOn7kufnZ3HBC6ageqJT7-FJFtaqpL0&callback=initMap&libraries=maps,marker&v=beta"></script>
+</html>
