@@ -1,9 +1,10 @@
-
-
 let map;
 let userMarker;
 let destination;
 let bounds;
+let building;
+let isNear = false;
+let destinationMarker;
 
 
 function start() {
@@ -20,7 +21,7 @@ function createEventListeners() {
 async function buttonHandler() {
 
     //Get the building and check for an entry
-    let building = document.getElementById('building').value;
+    building = document.getElementById('building').value;
     console.log("Building: " + building);
     if(building == "campus") {
         window.alert("Please Select a Building.");
@@ -58,15 +59,14 @@ async function buttonHandler() {
         return;
     }
 
-
+    //Store classroom numbers in session storage for later use
+    storeClassrooms(building, JSON.stringify(classNumbers));
 
     //Set up the map destination, userPosition, and updateMap
     mapSetup(building);
 
-    setInterval(updateMap, 3000)
-
-    outlineBuilding(building);
-    storeClassrooms(building, classNumbers);
+    //Run updateMap on an interval
+    setInterval(updateMap, 2000)
 }
 
 //Check through classrooms.json to ensure every entered classroom is a real classroom
@@ -106,16 +106,18 @@ async function outlineBuilding(building) {
         .then(coordinates => {
             for(let i = 0; i < coordinates.length; i++) {
                 latLngArray.push(new google.maps.LatLng((coordinates[i])[0],(coordinates[i])[1]))
+                //latLngArray.push({lat: (coordinates[i])[0], lng: (coordinates[i])[1]})
             }
+            //console.log("Outline coordinates: " + latLngArray)
 
-            polygon = new Polygon(coordinates)
-            polygon.setMap(map)
-            polygon.setOptions([fillColor = "red"])
-            polygon.setVisible(true)
-
-            //console.log("Map Center: " + map.getCenter())
-
-            //console.log(polygon)
+            poly1 = new google.maps.Polygon( 
+                {
+                paths: latLngArray,
+                map: map,
+                fillColor: "red",
+                strokeColor: "black",
+                strokeWidth: "2px"
+            });
 
         })
 
@@ -123,7 +125,7 @@ async function outlineBuilding(building) {
 
 //Fetch building/room coordinates from coordinates.json
 async function getRoomCoordinates(building, roomNumber) {
-    key = String(building + "-class")
+    let key = new String(building + "-class")
     return fetch("./coordinates.json")
         .then(response => {return response.json()}) //Get json from coordinates.json
         .then(data => {return data[key]})      //Get json from building selected
@@ -133,7 +135,7 @@ async function getRoomCoordinates(building, roomNumber) {
 
 //Fetch building outline coordinates
 async function getOutlineCoordinates(building) {
-    key = String(building + "-outline")
+    let key = new String(building + "-outline")
     return fetch("./coordinates.json")
         .then(response => {return response.json()})
         .then(data => {return data[key]})
@@ -151,9 +153,11 @@ function storeClassrooms(building, classrooms) {
 async function mapSetup(building) {
     await getRoomCoordinates(building, "0")
         .then(destArray => {
+            console.log("destArray: " + destArray)
             destination = new google.maps.LatLng(destArray[0], destArray[1]) //Create LatLng with building coordinates
             placeDestinationOnMap(); //Place a marker on the map for destination
             placeUserOnMap(); //Zoom the map to show and fit both markers
+            outlineBuilding(building); //Place a polygon overlay on the map
             updateMap();
         })
         .catch(error => console.log("Error with mapSetup"))
@@ -165,6 +169,12 @@ function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 38.75851500233256, lng: -93.7386496286563 }, // Example: Warrensburg
     zoom: 18,
+    gestureHandling: "none",
+    mapTypeId: "satellite",
+    streetViewControl: false,
+    mapTypeControl: false,
+    cameraControl: false,
+    keyboardShortcuts: false,
     styles: [{
         featureType: "poi", // Disables points of interest (default markers)
         elementType: "labels",
@@ -227,9 +237,8 @@ function updateBounds() {
     let midLat = (userPos.lat() + destPos.lat()) / 2;
     let midLng = (userPos.lng() + destPos.lng()) / 2;
     let midpoint = { lat: midLat, lng: midLng };
-    // userMarker.setPosition(midpoint);  FOR TESTING
+    userMarker.setPosition(midpoint);  //FOR TESTING
 
-    console.log("Midpoint: " + midpoint.lat + ", " + midpoint.lng);
 
     let newBounds = new google.maps.LatLngBounds();
     newBounds.extend(userPos);
@@ -244,18 +253,67 @@ function placeDestinationOnMap() {
         position: destination,
         map: map,
         title: "Destination",
-        icon: "ucm-mule.png"
+        icon: "small-mule.png",
     });
 }
 
 
 function updateMap(){
-    placeUserOnMap();
-    updateBounds();
+    //placeUserOnMap();
+    if(!isNear)
+        checkDistance();
+    if(!isNear)
+        updateBounds();
+    
     console.log("updateMap(). Center moved to:", map.getCenter().toJSON());
 }
 
 
+function checkDistance() {
+
+    //check and make sure required values are declared and assigned
+    if (!userMarker || !destination) {
+        console.log("User or destination not defined");
+        return;
+    }
+
+    let userPos = userMarker.getPosition();
+    let destPos = destination;
+    let latDiff = Math.abs(userPos.lat() - destPos.lat());
+    let lngDiff = Math.abs(userPos.lng() - destPos.lng());
+
+    if (latDiff <= 0.0015 && lngDiff <= 0.0015) {
+        console.log("They getting closer, engage classroom marker mode");
+        isNear = true
+        map.setCenter(destination);
+        addClassroomMarkers();
+    }
+}
+
+async function addClassroomMarkers() {
+    //Delete building map marker
+    destinationMarker = null;
+
+    //Pull class numbers from session storage
+    classrooms = JSON.parse(sessionStorage.getItem("classrooms"));
+    console.log("classrooms: " + classrooms)
+
+    //Pull coordinates of each classroom, then add a map marker for each
+    for(let i = 0; i < classrooms.length; i++) {
+        let latLng
+        console.log("classroom[i]: " + classrooms[i])
+        await getRoomCoordinates(building, new String(classrooms[i]))
+            .then(data => {
+                console.log("Data: " + data)
+                latLng = {lat: data[0], lng: data[1]}
+                new google.maps.Marker({
+                    position: latLng,
+                    map: map,
+                    title: "Room " + classrooms[i],
+                })
+            })
+    }
+}
 
 
 
