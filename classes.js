@@ -70,7 +70,7 @@ async function buttonHandler() {
 
 
     //Run updateMap on an interval
-    setInterval(updateMap, 2000)
+    setInterval(updateMap, 500)
 }
 
 function assignToggleHandlers(){
@@ -131,7 +131,7 @@ async function outlineBuilding(building) {
                 map: map,
                 fillColor: "red",
                 strokeColor: "black",
-                strokeWidth: "2px"
+                strokeWidth: "0px"
             });
 
         })
@@ -226,7 +226,7 @@ function placeUserOnMap() {
                            title: "You are here",
                            icon: "pin.png"
                        });
-                }
+                    }
                 }
             }
         )
@@ -252,7 +252,7 @@ function updateBounds() {
     let midLat = (userPos.lat() + destPos.lat()) / 2;
     let midLng = (userPos.lng() + destPos.lng()) / 2;
     let midpoint = { lat: midLat, lng: midLng };
-    //userMarker.setPosition(midpoint);  //FOR TESTING
+    userMarker.setPosition(midpoint);  //FOR TESTING
 
 
     let newBounds = new google.maps.LatLngBounds();
@@ -274,7 +274,7 @@ function placeDestinationOnMap() {
 
 
 function updateMap(){
-    placeUserOnMap(); //Comment for midpoint testing
+    //placeUserOnMap(); //Comment for midpoint testing
     
     //Once user is close enough, stop adjusting checking distance and updating bounds of the map
     if(!isNear)
@@ -335,7 +335,7 @@ async function addClassroomMarkers() {
                     map: map,
                     title: "Room " + classrooms[i],
                     icon: "" + floorNum + ".png"
-                })
+                              })
             })
     }
     assignToggleHandlers();
