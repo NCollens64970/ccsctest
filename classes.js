@@ -70,7 +70,7 @@ async function buttonHandler() {
 
 
     //Run updateMap on an interval
-    setInterval(updateMap, 500)
+    setInterval(updateMap, 2000)
 }
 
 function assignToggleHandlers(){
@@ -131,7 +131,7 @@ async function outlineBuilding(building) {
                 map: map,
                 fillColor: "red",
                 strokeColor: "black",
-                strokeWidth: "0px"
+                strokeWidth: "2px"
             });
 
         })
@@ -171,7 +171,16 @@ async function mapSetup(building) {
             console.log("destArray: " + destArray)
             destination = new google.maps.LatLng(destArray[0], destArray[1]) //Create LatLng with building coordinates
             placeDestinationOnMap(); //Place a marker on the map for destination
-            placeUserOnMap(); //Zoom the map to show and fit both markers
+            //placeUserOnMap(); //Zoom the map to show and fit both markers
+            navigator.geolocation.getCurrentPosition( (position) => {
+                userMarker = new google.maps.Marker({
+                    position: {lat: position.coords.latitude, lng: position.coords.longitude},
+                    map: map,
+                    title: "You are here",
+                    icon: "Person-pin.png"
+                });
+                updateBounds();
+            })
             outlineBuilding(building); //Place a polygon overlay on the map
             updateMap();
         })
@@ -203,36 +212,6 @@ function initMap() {
 window.initMap = initMap; // Ensure global scope
 
 
-function placeUserOnMap() {
-    if(navigator.geolocation){
-        let userLocation;
-        navigator.geolocation.getCurrentPosition( (position) =>
-            {
-                userLocation = {
-                    lat : position.coords.latitude,
-                    lng : position.coords.longitude
-                };
-                if (map) {
-                    //map.setCenter(userLocation);
-
-                    // Add a marker at the users location
-                   if (userMarker != null){
-                       userMarker.setPosition(userLocation);
-                   }
-                   else{
-                       userMarker = new google.maps.Marker({
-                           position: userLocation,
-                           map: map,
-                           title: "You are here",
-                           icon: "pin.png"
-                       });
-                    }
-                }
-            }
-        )
-    }
-}
-
 function updateBounds() {
     if (!userMarker){
         console.log("userMarker not defined");
@@ -252,7 +231,7 @@ function updateBounds() {
     let midLat = (userPos.lat() + destPos.lat()) / 2;
     let midLng = (userPos.lng() + destPos.lng()) / 2;
     let midpoint = { lat: midLat, lng: midLng };
-    userMarker.setPosition(midpoint);  //FOR TESTING
+    //userMarker.setPosition(midpoint);  //FOR TESTING
 
 
     let newBounds = new google.maps.LatLngBounds();
@@ -274,20 +253,37 @@ function placeDestinationOnMap() {
 
 
 function updateMap(){
-    //placeUserOnMap(); //Comment for midpoint testing
-    
-    //Once user is close enough, stop adjusting checking distance and updating bounds of the map
-    if(!isNear)
-        checkDistance();
-    if(!isNear)
-        updateBounds();
-    
-    console.log("updateMap(). Center moved to:", map.getCenter().toJSON());
-    console.log(classroomMarkers[1-1])
-    console.log(classroomMarkers[2-1])
-    console.log(classroomMarkers[3-1])
-    console.log(classroomMarkers[4-1])
-    console.log(classroomMarkers[5-1])
+    let totalLat = 0;
+    let totalLng = 0;
+    if(navigator.geolocation){
+        
+        let counter = 0;
+        //Call for position 9 times every map update. Update to the average of these calls
+        let intervalId = setInterval(() => {
+            navigator.geolocation.getCurrentPosition( (position) => {
+                totalLat += position.coords.latitude;
+                totalLng += position.coords.longitude;
+            })
+            counter++
+            if(counter >= 9) {
+                console.log("totalLat: " + totalLat);
+                console.log("Counter: " + counter);
+                
+                let avgLat = totalLat/(counter - 1);
+                let avgLng = totalLng/(counter - 1);
+                totalLat = 0;
+                totalLng = 0;
+                userMarker.setPosition({lat : avgLat, lng : avgLng});
+                
+                //Once the user is clone enough, stop adjusting map and focus it on the building
+                if(!isNear)
+                    checkDistance();
+                if(!isNear)
+                    updateBounds();
+                window.clearInterval(intervalId);
+            }
+        }, 300)
+    }
 }
 
 
@@ -334,8 +330,8 @@ async function addClassroomMarkers() {
                     position: latLng,
                     map: map,
                     title: "Room " + classrooms[i],
-                    icon: "" + floorNum + ".png"
-                              })
+                    icon: new String(floorNum) + ".png"
+                })
             })
     }
     assignToggleHandlers();
