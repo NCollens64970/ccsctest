@@ -97,16 +97,50 @@ async function retrieveClassrooms(building) {
         .catch(error => console.error("Error retrieving classrooms"))
 }
 
+//Draw an outline of the building on the map
+async function outlineBuilding(building) {
+    latLngArray = Array();
+    const {Polygon} = await google.maps.importLibrary("maps")
+    
+
+    await getOutlineCoordinates(building)
+        .then(coordinates => {
+            console.log("Coords: " + coordinates)
+            for(let i = 0; i < coordinates.length; i++) {
+                latLngArray.push(new google.maps.LatLng((coordinates[i])[0],(coordinates[i])[1]))
+            }
+
+            polygon = new Polygon(coordinates)
+            polygon.setMap(map)
+            polygon.setOptions([fillColor = "red"])
+            polygon.setVisible(true)
+
+            console.log("Map Center: " + map.getCenter())
+
+            console.log(polygon)
+
+        })
+
+}
+
 //Fetch building/room coordinates from coordinates.json
-async function getOutlineCoordiantes(key, roomNumber) {
+async function getRoomCoordiantes(building, roomNumber) {
+    key = String(building + "-class")
     return fetch("./coordinates.json")
         .then(response => {return response.json()}) //Get json from coordinates.json
-        .then(data => {return data[building]})      //Get json from building selected
+        .then(data => {return data[key]})      //Get json from building selected
         .then(buildingJson => {return buildingJson[String(roomNumber)]})   //Narrow to roomNumber (0 for bulding itself)
         .catch(error => console.log("Error retrieving building coordinates"))
 }
 
-
+//Fetch building outline coordinates
+async function getOutlineCoordinates(building) {
+    key = String(building + "-outline")
+    return fetch("./coordinates.json")
+        .then(response => {return response.json()})
+        .then(data => {return data[key]})
+        .catch(error => console.log("Error getting outline coordinates"))
+}
 
 //Save classrooms in local storage
 function storeClassrooms(building, classrooms) {
@@ -154,6 +188,7 @@ function placeUserOnMap() {
                            position: userLocation,
                            map: map,
                            title: "You are here",
+                           icon: "Person-pin.png"
                        });
 
                     console.log("Map center moved to:", map.getCenter().toJSON());
@@ -174,7 +209,6 @@ function setDefaultBounds() {
 
     bounds = new google.maps.LatLngBounds(sw,ne);
     map.fitBounds(bounds);
-
 }
 
 function updateBounds() {
@@ -210,6 +244,9 @@ function placeDestinationOnMap() {
             position: destination,
             map: map,
             title: "Destination",
+            icon: "small-mule.png",
+            scaledSize: { "width": 40, "height": 40 },
+            anchor: { "x": 20, "y": 40 }
         });
     }
 }
