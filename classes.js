@@ -305,6 +305,7 @@ function checkDistance() {
         console.log("They getting closer, engage classroom marker mode");
         isNear = true
         map.setCenter(destination);
+        map.setZoom(20);
         addClassroomMarkers();
     }
 }
