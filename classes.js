@@ -177,7 +177,7 @@ async function mapSetup(building) {
                     position: {lat: position.coords.latitude, lng: position.coords.longitude},
                     map: map,
                     title: "You are here",
-                    icon: "Person-pin.png"
+                    icon: "pin.png"
                 });
                 updateBounds();
             })
