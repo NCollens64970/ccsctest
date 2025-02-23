@@ -209,7 +209,7 @@ function placeUserOnMap() {
                            position: userLocation,
                            map: map,
                            title: "You are here",
-                           icon: "person-pin.png"
+                           icon: "pin.png"
                        });
                 }
                 }
