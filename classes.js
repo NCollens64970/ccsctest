@@ -1,18 +1,25 @@
 
+
 let map;
 let userMarker;
-let building = "default";
+let destination;
+let destinationMarker;
+let building = "campus";
 let bounds;
+
+
 function start() {
-    //Clear possible previous session storage and create event listeners
     sessionStorage.clear();
     createEventListeners();
-    //placeUserOnMap();
-    //setInterval(placeUserOnMap, 10000)
+    destination = new google.maps.LatLng(38.75887529868099, -93.7383900155052);
+    updateMap();
     setDefaultBounds();
-    setInterval(updateMap,5000);
+    placeDestinationOnMap();
+    setInterval(updateMap, 3000)
+
 
 }
+
 
 function createEventListeners() {
     button = document.getElementById('button');
@@ -47,7 +54,6 @@ async function buttonHandler() {
             }
             k++;
         }
-
     }
 
 
@@ -59,8 +65,7 @@ async function buttonHandler() {
     //Trim rooms to ensure they follow correct typing
     if(!validateRoomNumbers(building, classNumbers))
         return;
-    buildingCoordiantes = await getCoordiantes(building, 0);
-    console.log("Coordinates: " + buildingCoordiantes)
+    outlineBuilding(building);
     storeClassrooms(building, classNumbers);
 }
 
@@ -93,13 +98,14 @@ async function retrieveClassrooms(building) {
 }
 
 //Fetch building/room coordinates from coordinates.json
-async function getCoordiantes(building, roomNumber) {
+async function getOutlineCoordiantes(key, roomNumber) {
     return fetch("./coordinates.json")
         .then(response => {return response.json()}) //Get json from coordinates.json
         .then(data => {return data[building]})      //Get json from building selected
         .then(buildingJson => {return buildingJson[String(roomNumber)]})   //Narrow to roomNumber (0 for bulding itself)
         .catch(error => console.log("Error retrieving building coordinates"))
 }
+
 
 
 //Save classrooms in local storage
@@ -109,25 +115,20 @@ function storeClassrooms(building, classrooms) {
 }
 
 
-    function initMap() {
+function initMap() {
 
     map = new google.maps.Map(document.getElementById("map"), {
     center: { lat: 38.75851500233256, lng: -93.7386496286563 }, // Example: Warrensburg
     zoom: 18,
-        styles: [
-            {
-                featureType: "poi", // Disables points of interest (default markers)
-                elementType: "labels",
-                stylers: [{ visibility: "off" }]
-            },
-            {
-                featureType: "transit", // Disables transit markers
-                elementType: "labels",
-                stylers: [{ visibility: "off" }]
-            },
-            {toggleStreetView : false}
-        ]
-});
+    styles: [{
+        featureType: "poi", // Disables points of interest (default markers)
+        elementType: "labels",
+        stylers: [{ visibility: "off" }]},{
+        featureType: "transit", // Disables transit markers
+        elementType: "labels",
+        stylers: [{ visibility: "off" }]},
+        {toggleStreetView : false}
+    ]});
 }
     window.initMap = initMap; // ✅ Ensure global scope
 
@@ -142,7 +143,7 @@ function placeUserOnMap() {
                     lng : position.coords.longitude
                 };
                 if (map) {
-                    map.setCenter(userLocation);
+                    //map.setCenter(userLocation);
 
                     // Add a marker at the users location
                    if (userMarker != null){
@@ -167,6 +168,7 @@ function setDefaultBounds() {
 //     SW: 38.75584609299071, -93.74314581659915
 //     NE: 38.760581485120454, -93.73409265378699
 
+
     const sw = new google.maps.LatLng(38.75584609299071, -93.74314581659915);
     const ne = new google.maps.LatLng(38.760581485120454, -93.73409265378699);
 
@@ -175,23 +177,47 @@ function setDefaultBounds() {
 
 }
 
-function updateBounds(){
-    lat = 39.08813678102937
-    lon = -92.18579472908672
+function updateBounds() {
+    if (!userMarker || !destination){
+        console.log("Either userMarker or destination not defined");
+        return;
+    }
 
-    temp = new google.maps.LatLng(lat,lon);
-    bounds = bounds.extend(temp);
-    map.fitBounds(bounds);
+    let userPos = userMarker.getPosition();
+    let destPos = destination; // Needs to be a LatLng object
+
+
+    // Midpoint logic
+    let midLat = (userPos.lat() + destPos.lat()) / 2;
+    let midLng = (userPos.lng() + destPos.lng()) / 2;
+    let midpoint = { lat: midLat, lng: midLng };
+
+    console.log("Midpoint: " + midpoint.lat + ", " + midpoint.lng);
+
+    let newBounds = new google.maps.LatLngBounds();
+    newBounds.extend(userPos);
+    newBounds.extend(destPos);
+
+    map.fitBounds(newBounds);
+    map.setCenter(midpoint);
 }
 
-function frameOnUserAndBuilding(){
-    //     Used to update bounds when user and building coords are populated
-    //     This ensure that the map is always showing the users position and their destination
+function placeDestinationOnMap() {
+    if (destinationMarker != null) {
+        destinationMarker = destinationMarker.setPosition(destination);
+    } else {
+        destinationMarker = new google.maps.Marker({
+            position: destination,
+            map: map,
+            title: "Destination",
+        });
+    }
 }
+
 
 function updateMap(){
-
-    frameOnUserAndBuilding();
+        console.log("updateMap()")
+    placeUserOnMap();
     updateBounds();
 
 }
