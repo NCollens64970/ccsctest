@@ -3,21 +3,12 @@
 let map;
 let userMarker;
 let destination;
-let destinationMarker;
-let building = "campus";
 let bounds;
 
 
 function start() {
     sessionStorage.clear();
     createEventListeners();
-    destination = new google.maps.LatLng(38.75887529868099, -93.7383900155052);
-    updateMap();
-    setDefaultBounds();
-    placeDestinationOnMap();
-    setInterval(updateMap, 3000)
-
-
 }
 
 
@@ -29,7 +20,7 @@ function createEventListeners() {
 async function buttonHandler() {
 
     //Get the building and check for an entry
-    building = document.getElementById('building').value;
+    let building = document.getElementById('building').value;
     console.log("Building: " + building);
     if(building == "campus") {
         window.alert("Please Select a Building.");
@@ -56,15 +47,24 @@ async function buttonHandler() {
         }
     }
 
-
     if(classNumbers.length == 0) {
         alert("Please Enter at Least One Classroom Number");
         return;
     }
 
-    //Trim rooms to ensure they follow correct typing
-    if(!validateRoomNumbers(building, classNumbers))
+    //Validate rooms to ensure they are numbers and at least one exists
+    if(!validateRoomNumbers(building, classNumbers)) {
+        window.alert("One of your classrooms doesn't exist");
         return;
+    }
+
+
+
+    //Set up the map destination, userPosition, and updateMap
+    mapSetup(building);
+
+    setInterval(updateMap, 3000)
+
     outlineBuilding(building);
     storeClassrooms(building, classNumbers);
 }
@@ -82,7 +82,6 @@ async function validateRoomNumbers(building, enteredClassrooms) {
                     }
                 }
                 if(missing) {
-                    window.alert("One of your classrooms doesn't exist");
                     return false;
                 }
             }
@@ -105,7 +104,6 @@ async function outlineBuilding(building) {
 
     await getOutlineCoordinates(building)
         .then(coordinates => {
-            console.log("Coords: " + coordinates)
             for(let i = 0; i < coordinates.length; i++) {
                 latLngArray.push(new google.maps.LatLng((coordinates[i])[0],(coordinates[i])[1]))
             }
@@ -115,16 +113,16 @@ async function outlineBuilding(building) {
             polygon.setOptions([fillColor = "red"])
             polygon.setVisible(true)
 
-            console.log("Map Center: " + map.getCenter())
+            //console.log("Map Center: " + map.getCenter())
 
-            console.log(polygon)
+            //console.log(polygon)
 
         })
 
 }
 
 //Fetch building/room coordinates from coordinates.json
-async function getRoomCoordiantes(building, roomNumber) {
+async function getRoomCoordinates(building, roomNumber) {
     key = String(building + "-class")
     return fetch("./coordinates.json")
         .then(response => {return response.json()}) //Get json from coordinates.json
@@ -149,6 +147,19 @@ function storeClassrooms(building, classrooms) {
 }
 
 
+//Perform map functions once the destination is validated
+async function mapSetup(building) {
+    await getRoomCoordinates(building, "0")
+        .then(destArray => {
+            destination = new google.maps.LatLng(destArray[0], destArray[1]) //Create LatLng with building coordinates
+            placeDestinationOnMap(); //Place a marker on the map for destination
+            placeUserOnMap(); //Zoom the map to show and fit both markers
+            updateMap();
+        })
+        .catch(error => console.log("Error with mapSetup"))
+}
+
+
 function initMap() {
 
     map = new google.maps.Map(document.getElementById("map"), {
@@ -164,7 +175,7 @@ function initMap() {
         {toggleStreetView : false}
     ]});
 }
-    window.initMap = initMap; // ✅ Ensure global scope
+window.initMap = initMap; // Ensure global scope
 
 
 function placeUserOnMap() {
@@ -190,8 +201,6 @@ function placeUserOnMap() {
                            title: "You are here",
                            icon: "Person-pin.png"
                        });
-
-                    console.log("Map center moved to:", map.getCenter().toJSON());
                 }
                 }
             }
@@ -199,21 +208,14 @@ function placeUserOnMap() {
     }
 }
 
-function setDefaultBounds() {
-//     SW: 38.75584609299071, -93.74314581659915
-//     NE: 38.760581485120454, -93.73409265378699
-
-
-    const sw = new google.maps.LatLng(38.75584609299071, -93.74314581659915);
-    const ne = new google.maps.LatLng(38.760581485120454, -93.73409265378699);
-
-    bounds = new google.maps.LatLngBounds(sw,ne);
-    map.fitBounds(bounds);
-}
-
 function updateBounds() {
-    if (!userMarker || !destination){
-        console.log("Either userMarker or destination not defined");
+    if (!userMarker){
+        console.log("userMarker not defined");
+        return;
+    }
+
+    if(!destination) {
+        console.log("destination not defined");
         return;
     }
 
@@ -225,6 +227,7 @@ function updateBounds() {
     let midLat = (userPos.lat() + destPos.lat()) / 2;
     let midLng = (userPos.lng() + destPos.lng()) / 2;
     let midpoint = { lat: midLat, lng: midLng };
+    // userMarker.setPosition(midpoint);  FOR TESTING
 
     console.log("Midpoint: " + midpoint.lat + ", " + midpoint.lng);
 
@@ -237,26 +240,19 @@ function updateBounds() {
 }
 
 function placeDestinationOnMap() {
-    if (destinationMarker != null) {
-        destinationMarker = destinationMarker.setPosition(destination);
-    } else {
-        destinationMarker = new google.maps.Marker({
-            position: destination,
-            map: map,
-            title: "Destination",
-            icon: "small-mule.png",
-            scaledSize: { "width": 40, "height": 40 },
-            anchor: { "x": 20, "y": 40 }
-        });
-    }
+    destinationMarker = new google.maps.Marker({
+        position: destination,
+        map: map,
+        title: "Destination",
+        icon: "ucm-mule.png"
+    });
 }
 
 
 function updateMap(){
-        console.log("updateMap()")
     placeUserOnMap();
     updateBounds();
-
+    console.log("updateMap(). Center moved to:", map.getCenter().toJSON());
 }
 
 
