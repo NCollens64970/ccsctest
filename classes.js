@@ -5,6 +5,8 @@ let bounds;
 let building;
 let isNear = false;
 let destinationMarker;
+let classroomMarkers = [5];
+toggle =[5]
 
 
 function start() {
@@ -16,6 +18,7 @@ function start() {
 function createEventListeners() {
     button = document.getElementById('button');
     button.addEventListener("click", buttonHandler);
+
 }
 
 async function buttonHandler() {
@@ -65,8 +68,20 @@ async function buttonHandler() {
     //Set up the map destination, userPosition, and updateMap
     mapSetup(building);
 
+
     //Run updateMap on an interval
     setInterval(updateMap, 2000)
+}
+
+function assignToggleHandlers(){
+    for (let i = 0; i <=5; i++){
+        if (classroomMarkers[i]) {
+            console.log("hide" + i);
+            toggle[i] = document.getElementById("hide" + i);
+            toggle[i].addEventListener("change", toggleMarker)
+        }
+        else return;
+    }
 }
 
 //Check through classrooms.json to ensure every entered classroom is a real classroom
@@ -209,7 +224,7 @@ function placeUserOnMap() {
                            position: userLocation,
                            map: map,
                            title: "You are here",
-                           icon: "pin.png"
+                           icon: "Person-pin.png"
                        });
                 }
                 }
@@ -237,7 +252,7 @@ function updateBounds() {
     let midLat = (userPos.lat() + destPos.lat()) / 2;
     let midLng = (userPos.lng() + destPos.lng()) / 2;
     let midpoint = { lat: midLat, lng: midLng };
-    userMarker.setPosition(midpoint);  //FOR TESTING
+    //userMarker.setPosition(midpoint);  //FOR TESTING
 
 
     let newBounds = new google.maps.LatLngBounds();
@@ -259,13 +274,20 @@ function placeDestinationOnMap() {
 
 
 function updateMap(){
-    //placeUserOnMap();
+    placeUserOnMap(); //Comment for midpoint testing
+    
+    //Once user is close enough, stop adjusting checking distance and updating bounds of the map
     if(!isNear)
         checkDistance();
     if(!isNear)
         updateBounds();
     
     console.log("updateMap(). Center moved to:", map.getCenter().toJSON());
+    console.log(classroomMarkers[1-1])
+    console.log(classroomMarkers[2-1])
+    console.log(classroomMarkers[3-1])
+    console.log(classroomMarkers[4-1])
+    console.log(classroomMarkers[5-1])
 }
 
 
@@ -277,6 +299,7 @@ function checkDistance() {
         return;
     }
 
+    //Check distance from user to destination/center of building
     let userPos = userMarker.getPosition();
     let destPos = destination;
     let latDiff = Math.abs(userPos.lat() - destPos.lat());
@@ -292,7 +315,7 @@ function checkDistance() {
 
 async function addClassroomMarkers() {
     //Delete building map marker
-    destinationMarker = null;
+    destinationMarker.setMap(null);
 
     //Pull class numbers from session storage
     classrooms = JSON.parse(sessionStorage.getItem("classrooms"));
@@ -304,16 +327,33 @@ async function addClassroomMarkers() {
         console.log("classroom[i]: " + classrooms[i])
         await getRoomCoordinates(building, new String(classrooms[i]))
             .then(data => {
+                floorNum = parseInt(new String(classrooms[i])[0])
                 console.log("Data: " + data)
                 latLng = {lat: data[0], lng: data[1]}
-                new google.maps.Marker({
+                classroomMarkers[i] = new google.maps.Marker({
                     position: latLng,
                     map: map,
                     title: "Room " + classrooms[i],
+                    icon: "" + floorNum + ".png"
                 })
             })
     }
+    assignToggleHandlers();
 }
+
+function toggleMarker(event) {
+        let checkbox = event.target;
+        let index = checkbox.id.replace("hide", "");
+        console.log("INDEX:" + index);
+
+        if (classroomMarkers[index].map != null) {
+            classroomMarkers[index].setMap(null);
+        }
+        else {
+            classroomMarkers[index].setMap(map);
+        }
+}
+
 
 
 

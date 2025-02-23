@@ -1,3 +1,11 @@
 {
-    "wc-morris": [105, 128, 130, 201, 210, 224, 231, 310, 322, 424]
+    "dockery" : [],
+    "grinstead" : [],
+    "humphreys" : [],
+    "lovinger" : [],
+    "martin" : [],
+    "morrow" : [],
+    "ward-edwards" : [],
+    "utt" : [],
+    "wc-morris" : [105, 128, 130, 201, 210, 224, 231, 310, 322, 424]
 }
